@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <style>
+        * {
+            padding: 0;
+            margin: 0;
+            list-style: none;
+            border: 0;
+        }
+
+        .all {
+            width: 500px;
+            height: 200px;
+            padding: 7px;
+            border: 1px solid #ccc;
+            margin: 100px auto;
+            position: relative;
+        }
+
+        .screen {
+            width: 500px;
+            height: 200px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .screen li {
+            width: 500px;
+            height: 200px;
+            overflow: hidden;
+            float: left;
+        }
+
+        .screen ul {
+            position: absolute;
+            left: 0;
+            top: 0px;
+            width: 3000px;
+        }
+
+        .all ol {
+            position: absolute;
+            right: 10px;
+            bottom: 10px;
+            line-height: 20px;
+            text-align: center;
+        }
+
+        .all ol li {
+            float: left;
+            width: 20px;
+            height: 20px;
+            background: #fff;
+            border: 1px solid #ccc;
+            margin-left: 10px;
+            cursor: pointer;
+        }
+
+        .all ol li.current {
+            background: yellow;
+        }
+
+        #arr {
+            display: none;
+        }
+
+        #arr span {
+            width: 40px;
+            height: 40px;
+            position: absolute;
+            left: 5px;
+            top: 50%;
+            margin-top: -20px;
+            background: #000;
+            cursor: pointer;
+            line-height: 40px;
+            text-align: center;
+            font-weight: bold;
+            font-family: '黑体';
+            font-size: 30px;
+            color: #fff;
+            opacity: 0.3;
+            border: 1px solid #fff;
+        }
+
+        #arr #right {
+            right: 5px;
+            left: auto;
+        }
+    </style>
+</head>
+
+<body>
+    <body>
+        <div class="all" id="all">
+            <div class="screen" id="screen">
+                <ul id="ul">
+                    <li><img src="1.jpg" width="500" height="200" /></li>
+                    <li><img src="2.jpg" width="500" height="200" /></li>
+                    <li><img src="3.jpg" width="500" height="200" /></li>
+                    <li><img src="4.jpg" width="500" height="200" /></li>
+                    <li><img src="5.jpg" width="500" height="200" /></li>
+                </ul>
+                <ol></ol>
+                <div id="arr"><span id="left"><</span><span id="right">></span></div>
+            </div>
+        </div>
+        
+
+    <script>
+        //需求无缝滚动
+        //思路：复制第一张图片放到ul最后，
+        //当图片切换到第五张时，直接切换到第六张（复制的那一张）
+        //再次从第一张切换到第二张时，先瞬间跳到第一张
+        //然后再滑到第二张
+        //步骤：
+        //1.获取事件源及相关元素
+        var all = document.getElementById("all");
+        var screen = document.getElementById("screen");
+        var ul = screen.children[0];
+        var lis = ul.children;
+        var ol = screen.children[1];
+        var firstLi = ul.children[0];
+        var arr = document.getElementById("arr");
+        var arrLeft = arr.children[0];
+        var arrRight = arr.children[1];
+
+        //2.复制第一张图片所在的li添加到ul最后
+        var newLi = firstLi.cloneNode(true);
+        ul.appendChild(newLi);
+        //3.动态生成li，向lo中添加li，ul中的个数减一，
+        for (var i = 0; i < lis.length - 1; i++) {
+            var olNewLi = document.createElement('li');
+            olNewLi.innerHTML = i + 1;
+            ol.appendChild(olNewLi);
+        }
+
+        //点亮第一个小方块
+        var olLis = ol.children;
+        olLis[0].classList.add("current");
+        //4.鼠标放到li上切换图片,并修改key的值,让轮播的起始值为现在的小方块对应的图片(重点)
+        for (var i = 0; i < olLis.length; i++) {
+            olLis[i].index = i;
+            olLis[i].onmouseover = function () {
+                for (var j = 0; j < olLis.length; j++) {
+                    olLis[j].removeAttribute("class");
+                }
+                this.classList.add("current");
+                key = square = this.index;
+                console.log(key);
+                //图片的切换
+                animate(ul,-this.index * lis[0].offsetWidth);
+            }
+        }
+        //5.添加定时器，图片自动轮播
+        //定时器
+        var timer = null;
+        //图片
+        var key = 0;
+        //小方块
+        var square = 0;
+        //添加定时器
+        timer = setTimeout(autoPlay, 2000);
+
+        function autoPlay() {
+            //此函数被执行，代表小方块和图片的变量自增
+            key++;
+            console.log(key);
+            square++;
+            //如果key的值大于5时，重置为1(这里ul被移动了5次之后，就移动到了最后一张图片）;下次执行前立即将ul（图片设置回起点）
+            if (key > 5) {
+                key = 1;
+                ul.style.left = 0 + "px";
+            }
+            //此函数每被执行一次，图片变动一次
+            animate(ul,-key * lis[0].offsetWidth);
+            //square的值是否大于小方块的个数，大于则将其重置为0
+            square = square > olLis.length - 1 ? 0 : square;
+            //点亮对应的小方块（排他思想）
+            for (var i = 0; i < olLis.length; i++) {
+                olLis[i].removeAttribute("class");
+            }
+            olLis[square].classList.add("current");
+            timer = setTimeout(autoPlay,2000);
+        }
+        //6.鼠标移入显示按钮，清除定时器，鼠标移出隐藏按钮，启动定时器
+        all.onmouseover = function () {
+            arr.style.display = "block";
+            clearTimeout(timer);
+        }
+        all.onmouseout = function () {
+            arr.style.display = "none";
+            timer = setTimeout(autoPlay, 2000);
+        }
+
+        //7.为鼠标按钮添加事件
+        arrRight.onclick = function() {
+            //此函数被执行，代表小方块和图片的变量自增
+            key++;
+            console.log(key);
+            square++;
+            //如果key的值大于5时，重置为1(这里ul被移动了5次之后，就移动到了最后一张图片）;下次执行前立即将ul（图片设置回起点）
+            if (key > 5) {
+                key = 1;
+                ul.style.left = 0 + "px";
+            }
+            //此函数每被执行一次，图片变动一次
+            animate(ul,-key * lis[0].offsetWidth);
+            //square的值是否大于小方块的个数，大于则将其重置为0
+            square = square > olLis.length - 1 ? 0 : square;
+            //点亮对应的小方块（排他思想）
+            for (var i = 0; i < olLis.length; i++) {
+                olLis[i].removeAttribute("class");
+            }
+            olLis[square].classList.add("current");
+        }
+        arrLeft.onclick = function (event) {
+            key--;
+            console.log(key);
+            square--;
+            //如果key小于0,，就代表已经到了第一张，将其图片变成最后一张，再继续点击，将移动到第5张图片处（索引值为4）
+            if (key < 0) {
+                key = 4;
+                ul.style.left = -5 * lis[0].offsetWidth + "px";
+            }
+            animate(ul,-key*lis[0].offsetWidth);
+            square = square < 0 ? 4 : square;
+            for (var i = 0; i < olLis.length; i++) {
+                olLis[i].className = "";
+            }
+            olLis[square].className = "current";
+            event.stopPropagation();
+        }
+
+        function animate(elem,target) {
+            //1.用定时器之前先清除定时器
+            clearTimeout(elem.times);
+            // 2.确定盒子要移动的位置是盒子左侧还是右侧，
+            //如果目标值在左侧，步长取正值。在右侧，步长取负值
+            var speed = target > elem.offsetLeft ? 5 : -5;
+            //3.启动盒子，将定时器作为元素的一个属性存在，一个盒子只能存在一个定时器
+            //因为如果有两个以上的盒子使用了此函数，清除一个盒子的定时器
+            //就会影响到另一个盒子
+            var fled = function () {
+                var val = target - elem.offsetLeft;
+                //差值的10分之一
+                var sun = val/10;
+                //4.盒子自身加步长再加差值的十分之一
+                elem.style.left = elem.offsetLeft +sun+speed + "px";
+                 //5.停止盒子，计算目标位置和盒子现在位置之间的差距如果小于步长，就不能再前进了
+                //因为步长有证有负，所以需要转换成绝对值来比较,这段代码必须在盒子移动之前，提前获得两者之间差值
+                if (Math.abs(val) <= 10) {
+                    clearTimeout(elem.times);
+                    elem.style.left = target + "px";
+                }
+                //重复调用自身
+                elem.times = setTimeout(fled, 1);
+            }
+            elem.times = setTimeout(fled, 1)
+        }
+    </script>
+</body>
+
+</html>
