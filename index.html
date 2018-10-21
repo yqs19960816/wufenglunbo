@@ -177,6 +177,14 @@
             timer = setTimeout(autoPlay, 3000);
         }
 
+//设置页面不可见时轮播停止
+document.addEventListener('visibilitychange',function(e){
+    if(document.hidden){
+        window.clearInterval(timer);
+    }else{
+        timer = setTimeout(autoPlay, 3000);
+    }
+})
         //鼠标移入移除定时器
         Carousel.onmouseover = function () {
             arr.style.display = "block";
